@@ -28,8 +28,16 @@ class RedisClient {
     });
   }
 
-  isAlive() {
-    return this.client.connected;
+  async isAlive() {
+    return new Promise((resolve) => {
+      this.client.ping((err, reply) => {
+        if (err || reply !== 'PONG') {
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      });
+    });
   }
 
   async get(key) {
