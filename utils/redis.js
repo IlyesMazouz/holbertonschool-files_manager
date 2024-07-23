@@ -1,11 +1,30 @@
-import Redis from 'redis';
+const redis = require('redis');
 
 class RedisClient {
   constructor() {
-    this.client = Redis.createClient();
+    this.client = redis.createClient({
+      host: '127.0.0.1',
+      port: 6379,
+    });
 
     this.client.on('error', (err) => {
-      console.error(`Redis client error: ${err}`);
+      console.error(`Redis client not connected to the server: ${err}`);
+    });
+
+    this.client.on('connect', () => {
+      console.log('Redis client connected to the server');
+    });
+
+    this.client.on('ready', () => {
+      console.log('Redis client ready');
+    });
+
+    this.client.on('reconnecting', () => {
+      console.log('Redis client reconnecting');
+    });
+
+    this.client.on('end', () => {
+      console.log('Redis client disconnected');
     });
   }
 
@@ -15,41 +34,40 @@ class RedisClient {
 
   async get(key) {
     return new Promise((resolve, reject) => {
-      this.client.get(key, (err, reply) => {
+      this.client.get(key, (err, value) => {
         if (err) {
           reject(err);
-          return;
+        } else {
+          resolve(value);
         }
-        resolve(reply ? JSON.parse(reply) : null);
       });
     });
   }
 
   async set(key, value, duration) {
     return new Promise((resolve, reject) => {
-      this.client.set(key, JSON.stringify(value), 'EX', duration, (err, reply) => {
+      this.client.set(key, value, 'EX', duration, (err) => {
         if (err) {
           reject(err);
-          return;
+        } else {
+          resolve();
         }
-        resolve(reply);
       });
     });
   }
 
   async del(key) {
     return new Promise((resolve, reject) => {
-      this.client.del(key, (err, reply) => {
+      this.client.del(key, (err) => {
         if (err) {
           reject(err);
-          return;
+        } else {
+          resolve();
         }
-        resolve(reply);
       });
     });
   }
 }
 
 const redisClient = new RedisClient();
-
-export default redisClient;
+module.exports = redisClient;
