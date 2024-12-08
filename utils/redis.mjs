@@ -3,14 +3,17 @@ import { createClient } from 'redis';
 class RedisClient {
   constructor() {
     this.client = createClient();
-
     this.client.on('error', (err) => {
-      console.error(`Redis Client Error: ${err}`);
+      console.error('Redis Client Error:', err);
     });
 
-    this.client.connect().catch((err) => {
-      console.error(`Failed to connect to Redis: ${err}`);
-    });
+    (async () => {
+      try {
+        await this.client.connect();
+      } catch (error) {
+        console.error('Redis connection failed:', error);
+      }
+    })();
   }
 
   isAlive() {
@@ -18,28 +21,15 @@ class RedisClient {
   }
 
   async get(key) {
-    try {
-      return await this.client.get(key);
-    } catch (err) {
-      console.error(`Error getting key "${key}": ${err}`);
-      return null;
-    }
+    return this.client.get(key);
   }
 
   async set(key, value, duration) {
-    try {
-      await this.client.set(key, value, { EX: duration });
-    } catch (err) {
-      console.error(`Error setting key "${key}": ${err}`);
-    }
+    await this.client.set(key, value, { EX: duration });
   }
 
   async del(key) {
-    try {
-      await this.client.del(key);
-    } catch (err) {
-      console.error(`Error deleting key "${key}": ${err}`);
-    }
+    await this.client.del(key);
   }
 }
 
